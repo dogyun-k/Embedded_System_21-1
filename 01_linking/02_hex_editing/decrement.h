@@ -1,0 +1,2 @@
+
+int decrement(int);
