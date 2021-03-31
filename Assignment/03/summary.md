@@ -14,7 +14,6 @@ pwd 치고 복사한 뒤에 붙여넣기
 
 elf format : excutable load file
 ```
-
 ----------------------------
 # 1. 복습
 
