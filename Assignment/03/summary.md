@@ -17,4 +17,6 @@ elf format : excutable load file
 ----------------------------
 # 1. 복습
 
+## 1. ARM cross compiler 
+
 # 2. 과제
