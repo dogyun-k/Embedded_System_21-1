@@ -203,8 +203,9 @@ reset handler
     - LFLAGS : lex 플래그들
     - all : 파일들 컴파일하여 
     - gdb : 디버거 실행
-    - qemu : qemu에 펌웨어 로딩 후 실행
+    - qemu : qemu에 옵션에 해당하는 펌웨어 로딩 후 실행. 
 
+       
 
 2. main.c
 
@@ -218,11 +219,39 @@ reset handler
 
 ## 5. QEMU에 펌웨어 로딩
 
-1. makefile의 qemu 실행
+1. makefile의 qemu 분석
+
+    - 실행 옵션
+
+        1. verbose : 에러 및 상태에 대한 설명 출력해준다. 
+
+        2. board : STM32F4-Discovery 이름의 보드 에뮬레이터 사용
+
+        3. mcu : STM32F407VG 타입의 보드 사용.
+
+        4. gdb : qemu는 실행 시 디버거를 같이 실행하는 데 디버거 서버와 연결하기 위해 tcp포트번호를 명시하여 디버거와 연결한다.
+
+        5. d : 에뮬레이터 실행하면서 문제가 생기면 알려주는 옵션.
+
+        6. semihosting-config : Arm semihosting 프로토콜을 사용할수 있게 하는 옵션.
+        
+        7. semihosting-cmdline : 에뮬레이터에서 커맨드명령어 입력을 위해 사용. 반드시 마지막에 위치해야 함!
+
+2. qemu 실행
 
     ```
     make qemu
     ```
+
+    하면 위에 명시 된 보드와 에뮬레이터 옵션을 가진 HVM가 실행된다.
+
+    ![make_qemu](./image/make_qemu.PNG)
+    
+    Board : STM32F-Discovery
+
+    Device : STM32F407VG
+
+    gdb server : 포트 1234 수신 중
 
 
 ## 6. gdb를 이용하여 타겟보드(에뮬레이터)에 접속하여 코드 실행 및 Tracing
@@ -230,8 +259,10 @@ reset handler
 1. makefile의 gdb 실행
 
     ```
-    gdb
+    make gdb
     ```
+
+    ![make_gdb](./image/make_gdb.PNG)
 
 
 ## 7. gdb를 써보면서, 칩 내부의 동작을 확인하면서 어떻게 실행되는지 분석 (main.c에 간단한 알고리즘 구동하는 코드 삽입필요)
