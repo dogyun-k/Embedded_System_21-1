@@ -3,9 +3,16 @@
 int main(void){
 
     unsigned int led  = 0;
+    unsigned int cnt = 0;
 
     while(1){
-        led++;
+        if(cnt % 2 == 0){
+            led = 1;
+        }
+        else{
+            led = 0;
+        }
+        cnt++;
     }
 
 
