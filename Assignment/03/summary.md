@@ -1,29 +1,6 @@
 ### 21/03/25 (목)
 ----------------------------
 
-환경변수 변경
-
-```
-vi ~/.bashrc
-맨 밑에 path 변경
-export PATH=""
-pwd 치고 복사한 뒤에 붙여넣기
-
-
-
-elf format : excutable load file
-
-stack pointer
-
-reset handler
-
-컴파일
-보드 다운로드 qemu
-
-
-
-```
-----------------------------
 # 1. 복습
 
 ## 1. ARM cross compiler 설치 및 구동
@@ -194,26 +171,143 @@ reset handler
 
     qemu:
         qemu-system-gnuarmeclipse --verbose --verbose --board STM32F4-Discovery --mcu STM32F407VG --gdb tcp::1234 -d unimp,guest_errors --semihosting-config enable=on,target=native --semihosting-cmdline out
-
     ```
 
     - CC = arm-none-eabi-gcc : 컴파일러 매크로 지정
+
     - LD = arm-none-eabi-gcc : 링커 컴파일러 매크로 지정 
+
     - CFLAGS : c 컴파일러의 플래그들
+
     - LFLAGS : lex 플래그들
+
     - all : 파일들 컴파일하여 
+
     - gdb : 디버거 실행
+
     - qemu : qemu에 옵션에 해당하는 펌웨어 로딩 후 실행. 
 
        
-
 2. main.c
+
+    ```c
+    #include <stdio.h>
+
+    int main(void){
+
+        unsigned int led  = 0;
+
+        while(1){
+        }
+
+        return 0;
+    }
+    ```
+
+    후에 보드에 업로드하여 디버깅을 해보기 위해 간단한 프로그램을 작성했다.
 
 
 3. startup.s
 
+    - 메모리 컨트롤러 레지스터 설정과 스택 어드레스 할당을 위해 어셈블러로 코딩.
+
+    - 코드 설명
+        ```s
+            .syntax unified
+            .cpu cortex-m4
+            .thumb
+        ```
+        - Architecture 설정하는 부분
+        ---
+
+        ```s
+        .global g_vectors		// g_vectors 
+        .global Reset_Handler
+        
+            .section	.isr_vector, "a", %progbits
+            .type		g_vectors, %object
+            .size		g_vectors, .-g_vectors
+        ```
+        - isr vector 정의. 인터럽트 요청과 인터럽트 핸들러
+        ---
+        
+        ```s
+        g_vectors:					// 
+            .word	_estack			// Stack pointer 
+            .word	Reset_Handler	// HW
+            .word	0				// NMI_Handler
+            .word	0				// HardFault_Handler
+            .word	0				// MemManage_Handler
+            .word	0				// BusFault_Handler
+            .word	0				// UsageFault_Handler
+            .word	0			
+            .word	0			
+            .word	0			
+            .word	0			
+            .word	0				// SVC_Handler
+            .word	0				// DebugMon_Handler
+            .word	0
+            .word	0				// PendSV_Handler
+            .word	SysTick_Handler
+            .word	0
+        ```
+         - 인터럽트 백터 테이블 부분
+
+        - 스택포인터 초기화 및 다양한 핸들러 초기화.
+        ---
+        ```s
+        Reset_Handler:			// 
+            bl main				// 
+        ```
+        - 핸들러 호출 시 main 실행 
+        ---
+       
 
 4. Load Script
+
+    - 링크 스트립트에서 메모리의 사용 영역을 지정해줄 수 있다.
+
+        ```s
+        ENTRY(Reset_Handler)
+
+        _estack = 0x20020000; /* end of RAM */
+
+        MEMORY
+        {
+            RAM (xrw)	: ORIGIN = 0x20000000, LENGTH = 128k    /* SRAM */
+            ROM (rx)	: ORIGIN = 0x08000000, LENGTH = 512k    /* code */
+        }
+        ```
+        - RAM의 마지막 주소 (스택영역의 마지막)를 0x20020000으로 지정
+        - RAM의 시작 주소는 0x20000000, ROM의 시작주소는 0x08000000이고 이를 그림으로 보자.
+
+            ![linkerscript_memory](./image/linkerscript_memory.PNG)
+        ---
+        ```s
+        SECTIONS
+        {
+            .isr_vector	: 
+            {
+                . = ALIGN(4);
+                KEEP(*(.isr_vector))
+                . = ALIGN(4);
+            } >ROM
+
+            .text :
+            {
+                . = ALIGN(4);	
+                *(.text)
+                . = ALIGN(4);	
+            } >ROM
+
+        }
+        ```
+        - 각 테이블이 사용할 메모리를 정해준다. 지금은 isr_vector와 text 둘 다 ROM을 사용할 것이다.
+
+
+5. 전체 파일 구조
+
+    ![파일구조](./image/임베디드시스템부팅과정.PNG)
 
 
 
@@ -234,7 +328,7 @@ reset handler
         5. d : 에뮬레이터 실행하면서 문제가 생기면 알려주는 옵션.
 
         6. semihosting-config : Arm semihosting 프로토콜을 사용할수 있게 하는 옵션.
-        
+
         7. semihosting-cmdline : 에뮬레이터에서 커맨드명령어 입력을 위해 사용. 반드시 마지막에 위치해야 함!
 
 2. qemu 실행
@@ -247,11 +341,11 @@ reset handler
 
     ![make_qemu](./image/make_qemu.PNG)
     
-    Board : STM32F-Discovery
+    - Board : STM32F-Discovery
 
-    Device : STM32F407VG
+    - Device : STM32F407VG
 
-    gdb server : 포트 1234 수신 중
+    - gdb server : 포트 1234 수신 중
 
 
 ## 6. gdb를 이용하여 타겟보드(에뮬레이터)에 접속하여 코드 실행 및 Tracing
@@ -265,6 +359,51 @@ reset handler
     ![make_gdb](./image/make_gdb.PNG)
 
 
+2. 에뮬레이터의 디버거 서버에 접속
+
+    ```
+    (gdb) target remote:1234
+    ```
+
+    - 에뮬레이터가 리스닝하고 있는 디버거 서버의 tcp 포트번호는 1234번이므로 1234에 접속한다. 연결이 되면 디버거에서 보내는 명령이나 신호를 보드에서 받아들일 준비가 된 것이다.
+
+
+3. 보드에 파일을 업로드 후 로딩
+
+    ```
+    (gdb) file out.elf
+    (gdb) load
+    ```
+
+
+4. 코드 실행
+    
+    ```
+    (gdb) list
+    ```
+    - 현재 로드된 소스코드 내용을 보여준다.
+
+        ![list](./image/list.PNG)
+
+    ---
+    ```
+    (gdb) c
+    ```
+
+    - 전체 코드를 실행하는 명령어
+
+        ![continue](./image/continue.PNG)
+    ---
+    ```
+    (gdb) s
+    ```
+
+    - 한줄 씩 실행하는 명령어
+
+        ![step](./image/step.PNG)
+
+
+
 ## 7. gdb를 써보면서, 칩 내부의 동작을 확인하면서 어떻게 실행되는지 분석 (main.c에 간단한 알고리즘 구동하는 코드 삽입필요)
 
 1. main.c 구성
@@ -275,17 +414,16 @@ reset handler
     int main(void){
 
         unsigned int led  = 0;
-        int count = 0;
+        unsigned int cnt = 0;
 
         while(1){
-            if(count % 2 == 0){
+            if(cnt % 2 == 0){
                 led = 1;
             }
             else{
                 led = 0;
             }
-            printf("led = %d\n", led);
-            count++;
+            cnt++;
         }
 
 
@@ -293,3 +431,22 @@ reset handler
     }
     ```
     - 디버깅을 위해 간단한 프로그램을 코딩해보았다.
+
+2. 레지스터 정보 보기
+
+    ```
+    (gdb) info registers
+    ```
+
+    ![registers](./image/info_registers.PNG)
+
+
+3. 단계별로 실행해보며 레지스터 값이 변하는 것을 확인한다.
+
+    ![registers](./image/register.PNG)
+
+    ![registers2](./image/register2.PNG)
+
+    - 레지스터 3의 값이 변화한다.
+
+    - pc의 값이 분기 조건에 따라 변화한다.
