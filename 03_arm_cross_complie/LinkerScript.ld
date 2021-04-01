@@ -1,11 +1,11 @@
 ENTRY(Reset_Handler)
 
-_estack = 0x20020000; /* end of RAM, ╥╔©║╪╜ ╟║юЕ е╚ аж╪р */
+_estack = 0x20020000; /* end of RAM, О©╫О©╫О©╫О©╫О©╫О©╫ О©╫О©╫О©╫О©╫ е╚ О©╫ж╪О©╫ */
 
 MEMORY
 {
-	RAM (xrw)	: ORIGIN = 0x20000000, LENGTH = 128k /* SRAM ©╣©╙ ╦ч╦П╦╝ аж╪р 20000000╨нем 128k */
-	ROM (rx)	: ORIGIN = 0x08000000,  LENGTH = 512k	 /* code ©╣©╙ Ё╩юг flash аж╪р 8000000╨нем 512k */
+	RAM (xrw)	: ORIGIN = 0x20000000, LENGTH = 128k /* SRAM О©╫О©╫О©╫О©╫ О©╫ч╦О©╫ О©╫ж╪О©╫ 20000000О©╫О©╫О©╫О©╫ 128k */
+	ROM (rx)	: ORIGIN = 0x08000000,  LENGTH = 512k	 /* code О©╫О©╫О©╫О©╫ О©╫О©╫О©╫О©╫ flash О©╫ж╪О©╫ 8000000О©╫О©╫О©╫О©╫ 512k */
 }
 
 SECTIONS
