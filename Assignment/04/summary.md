@@ -16,15 +16,30 @@ db memory watch 0xfffffff0
 # 1. 복습
 ## 1. C 코드를 ARM cortex-m4 프로세서용으로 컴파일하고, 이를 프로세서 위에 로딩 후 (QEMU virtualization) 온칩에서 실행되는 과정을 gdb를 이용하여 step instruction 추적을 통해 실행과정을 분석하시오.
 
-1. ARM cortex-m4 프로세서 컴파일
+0. 소스코드 내용
+
+    
+
+1. ARM cortex-m4 프로세서용으로 컴파일
+
+    ```Makefile
+    make all
+    ```
 
     ![makefile](./image/makefile.PNG)
 
-    - -mcpu=cortex-m4 : 타겟 프로세서를 cortex-m4로 지정
+    - -mcpu=cortex-m4 : 타겟 프로세서를 cortex-m4로 지정.
 
-    - -mthumb : Trace32 디버깅 프로그램 사용
+    - -mthumb : Trace32 디버깅 프로그램 사용.
 
-    -  
+    - -mfloat-abi=hard : 사용할 부동 소수점 ABI를 지정. hard 옵션은 부동 소수점 명령어 생성을 허용하고 FPU 별 호출 규칙을 사용.
+
+    - mfpu=fpv4-sp-d16 : 부동 소수점 하드웨어 (또는 하드웨어 에뮬레이션)를 지정.
+
+2. 프로세서 로딩
+
+
+
 
 -----------------------------
 ## 2. C로 코딩하는 다양한 사례별로 Assembly code로 변환되어 실행되는 원리를 분석하시오. 
