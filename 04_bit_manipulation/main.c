@@ -1,9 +1,6 @@
 //reference
 // #define P0HW_ADDR 0x40000000
 // #define P0HW *(unsigned char*)P0HW_ADDR
-int sum(int a, int b){
-    return a+b;
-}
 
 int main(){
     

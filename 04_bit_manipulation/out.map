@@ -233,22 +233,18 @@ LOAD linker stubs
  .fini          0x0000000008000190        0x4 /home/dogyun/gcc-arm-none-eabi-10-2020-q4-major/bin/../lib/gcc/arm-none-eabi/10.2.1/thumb/v7e-m+fp/hard/crti.o
                 0x0000000008000190                _fini
 
-.text.sum       0x0000000008000194       0x1c
- .text.sum      0x0000000008000194       0x1c main.o
-                0x0000000008000194                sum
+.text.main      0x0000000008000194       0x14
+ .text.main     0x0000000008000194       0x14 main.o
+                0x0000000008000194                main
 
-.text.main      0x00000000080001b0       0x24
- .text.main     0x00000000080001b0       0x24 main.o
-                0x00000000080001b0                main
+.iplt           0x00000000080001a8        0x0
+ .iplt          0x00000000080001a8        0x0 startup.o
 
-.iplt           0x00000000080001d4        0x0
- .iplt          0x00000000080001d4        0x0 main.o
+.igot.plt       0x00000000080001a8        0x0
+ .igot.plt      0x00000000080001a8        0x0 startup.o
 
-.igot.plt       0x00000000080001d4        0x0
- .igot.plt      0x00000000080001d4        0x0 main.o
-
-.rel.dyn        0x00000000080001d4        0x0
- .rel.iplt      0x00000000080001d4        0x0 main.o
+.rel.dyn        0x00000000080001a8        0x0
+ .rel.iplt      0x00000000080001a8        0x0 startup.o
 
 .ARM.attributes
                 0x0000000000000000       0x30
@@ -263,30 +259,30 @@ LOAD linker stubs
  .comment       0x0000000000000000       0x4d main.o
                                          0x4e (size before relaxing)
 
-.debug_info     0x0000000000000000       0xd2
- .debug_info    0x0000000000000000       0xac main.o
- .debug_info    0x00000000000000ac       0x26 startup.o
+.debug_info     0x0000000000000000       0x87
+ .debug_info    0x0000000000000000       0x61 main.o
+ .debug_info    0x0000000000000061       0x26 startup.o
 
-.debug_abbrev   0x0000000000000000       0x9b
- .debug_abbrev  0x0000000000000000       0x87 main.o
- .debug_abbrev  0x0000000000000087       0x14 startup.o
+.debug_abbrev   0x0000000000000000       0x6e
+ .debug_abbrev  0x0000000000000000       0x5a main.o
+ .debug_abbrev  0x000000000000005a       0x14 startup.o
 
-.debug_aranges  0x0000000000000000       0x48
+.debug_aranges  0x0000000000000000       0x40
  .debug_aranges
-                0x0000000000000000       0x28 main.o
+                0x0000000000000000       0x20 main.o
  .debug_aranges
-                0x0000000000000028       0x20 startup.o
+                0x0000000000000020       0x20 startup.o
 
-.debug_ranges   0x0000000000000000       0x18
- .debug_ranges  0x0000000000000000       0x18 main.o
+.debug_ranges   0x0000000000000000       0x10
+ .debug_ranges  0x0000000000000000       0x10 main.o
 
 .debug_macro    0x0000000000000000      0xaa1
  .debug_macro   0x0000000000000000       0x11 main.o
  .debug_macro   0x0000000000000011      0xa90 main.o
 
-.debug_line     0x0000000000000000       0x97
- .debug_line    0x0000000000000000       0x5d main.o
- .debug_line    0x000000000000005d       0x3a startup.o
+.debug_line     0x0000000000000000       0x7b
+ .debug_line    0x0000000000000000       0x41 main.o
+ .debug_line    0x0000000000000041       0x3a startup.o
 
 .debug_str      0x0000000000000000     0x2d07
  .debug_str     0x0000000000000000     0x2cef main.o
@@ -294,5 +290,5 @@ LOAD linker stubs
  .debug_str     0x0000000000002cef       0x18 startup.o
                                          0x4e (size before relaxing)
 
-.debug_frame    0x0000000000000000       0x58
- .debug_frame   0x0000000000000000       0x58 main.o
+.debug_frame    0x0000000000000000       0x2c
+ .debug_frame   0x0000000000000000       0x2c main.o
