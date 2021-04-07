@@ -7,19 +7,25 @@ int sum(int a, int b){
 
 int main(){
     
-    char P0;
     int x;
     int y;
+    int z;
 
     x = 3;
     y = 5;
+    z = x + y;
+    z = x - y;
 
-    P0 = 0x95; // 1001 0101
-    P0 &= ~(0x10);
+    if(x > 3){
+        x += 2;
+    }
+    else{
+        x -= 2;
+    }
 
-    //P0HWr = 0x4f;
+    for(int i = 0; i < 5; i++){
+        y += 1;
+    }
 
-    sum(x, y);
-
-	while(1);
+    z = sum(x, y);
 }
