@@ -1,18 +1,7 @@
 ### 21/04/01 (목)
 ---------------------------
 
-db memory watch 0xfffffff0
 
-
-디버깅 실행
-1. make gdb
-2. target remote:1234
-3. file out.elf
-4. load
-5. b main
-6. si(인스트럭션 단위로 진행), s(줄 단위로 실행), n(함수단위로 실행)
-
-----------------------------
 # 1. 복습
 ## 1. C 코드를 ARM cortex-m4 프로세서용으로 컴파일하고, 이를 프로세서 위에 로딩 후 (QEMU virtualization) 온칩에서 실행되는 과정을 gdb를 이용하여 step instruction 추적을 통해 실행과정을 분석하시오.
 
@@ -286,6 +275,8 @@ db memory watch 0xfffffff0
         
         ----------
         - 매개변수인 x, y값이 들어있는 r0, r1값들을 메모리에 저장
+
+        - r0과 r1은 매개변수를 저장해주는 레지스터로 사용
         ```
         [r7, #4] <- r0
         [r7, #0] <- r1
