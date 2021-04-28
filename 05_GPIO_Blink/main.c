@@ -1,7 +1,6 @@
 #include "STM32FDiscovery.h"
 	
-void clk(void)
-{
+void clk(void) {
 	RCC_CR = 0;
 	RCC_PLLCFGR = 0;
 	RCC_CFGR = 0;
@@ -34,8 +33,7 @@ void TIM2_IRQHandler() {
 
 }
 
-int main (void)
-{
+int main (void) {
 	
 	clk();
 	
