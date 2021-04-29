@@ -136,6 +136,59 @@ int main(){
 
 1. 스펙문서에서 사용하고 싶은 장치와 연결된 MCU 핀을 찾는다.
 
-2. 그 연결 핀을 활성화한다.
+    - LED를 사용한다고 치면, Hardware and layout 부분에서 LED와 연결된 MCU의 포트번호를 확인한다. 이때 user라고 명시된 것만 우리가 사용 가능하다.
 
-3. 
+    - User LED 포트는 D에 연결되어있다.(다른 포트 몇개 더 있다.)
+
+2. 사용하고 싶은 장치와 연결된 포트를 활성화한다.
+
+    - 핀 활성화를 위해 해당 포트의 활성화 비트를 찾아 1로 바꿔준다.
+
+        ![RCC_AHB1ENR](./image/RCC_AHB1ENR.PNG)
+
+    - D포트는 3번 비트를 1로 함으로써 활성화 할 수 있다.
+
+        ```
+        RCC_AHB1ENR  |= 1<<3;		// PORTD enable
+        ```
+
+3. 해당 포트의 모드를 설정해준다.
+
+    - LED를 제어하기 위해 신호를 보내는 OUTPUT 포트이므로 OUTPUT MODE로 설정해준다. 
+
+        ![GPIOx_MODER](./image/GPIOx_MODER.png)
+
+        ![LED](./image/LED.png)
+
+    - 사용하고 싶은 핀 번호에 해당하는 비트를 output mode로 활성화하기 위해 `01`로 비트를 만들어줘야한다.
+
+        ```
+        GPIOD_MODER  |= 1<<24;		// PORTD 12 general output mode
+        ```
+
+        - 초록색 LED는 포트 D의 핀번호 12번에 연결되있다. 해당 핀을 output mode로 설정.
+
+    - 구체적인 출력 방법을 설정해준다.
+
+        ![GPIOx_OTYPER](./image/GPIOx_OTYPER.PNG)
+
+        - push pull : 출력이 0과 1로 된다.
+        - open drain : 출력이 0 아니면 특정 값으로 된다.
+
+        ```
+        GPIOD_OTYPER |= 0x00000000;
+        ```
+
+        - ON/OFF로 사용하기 위해 push pull 모드로 설정한다.
+
+4. 신호를 보낸다.
+
+    - 해당 포트 핀번호의 출력을 설정해준다.
+
+        ![GPIOx_ODR](./image/GPIOx_ODR.png)
+
+        ```
+        GPIOD_ODR |= 1<<12;
+        ```
+
+        - 1로 활성화하면 12번 핀에 연결 된 LED에 1신호가 전송되고 불이 켜지게 된다.ㄴ
