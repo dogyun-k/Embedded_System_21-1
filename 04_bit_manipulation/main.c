@@ -15,16 +15,5 @@ int main(){
     z = x + y;
     z = x - y;
 
-    if(x > 3){
-        x += 2;
-    }
-    else{
-        x -= 2;
-    }
-
-    for(int i = 0; i < 5; i++){
-        y += 1;
-    }
-
     z = sum(x, y);
 }

@@ -30,5 +30,14 @@ qemu:
 gdb:
 	./run_gdb.sh
 
+gdb_openocd:
+	./run_gdb_ocd.sh
+
+ocd:
+	openocd -f /usr/share/openocd/scripts/board/stm32f4discovery.cfg
+
+flash:
+	openocd -f /usr/share/openocd/scripts/board/stm32f4discovery.cfg -c "program out.elf verify reset exit"
+
 clean:
 	rm *.o *.d *.elf *.bin *.map

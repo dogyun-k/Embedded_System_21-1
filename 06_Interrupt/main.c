@@ -6,32 +6,36 @@ void clk(void)
 	RCC_PLLCFGR = 0;
 	RCC_CFGR = 0;
 		
-	RCC_CR |= (1<<16); // HSE set
+	RCC_CR |= (1<<16);                  // HSE set
 	while( (RCC_CR & ( 1<<17) ) == 0 ); // wait until HSE ready
 	
-	RCC_PLLCFGR |= 8;//0x00000008; // set PLLM
-	RCC_PLLCFGR |= (336<<6);//|= (336<<6); // 		set PLLN
-	RCC_PLLCFGR |= (0<<16); // set PLLP
-	RCC_PLLCFGR |= (7<<24);//0x07000000; // set PLLQ
+	RCC_PLLCFGR |= 8;           // 0x00000008;  // set PLLM
+	RCC_PLLCFGR |= (336<<6);    // |= (336<<6); // set PLLN
+	RCC_PLLCFGR |= (0<<16);     // set PLLP
+	RCC_PLLCFGR |= (7<<24);     // 0x07000000;  // set PLLQ
 
-	RCC_PLLCFGR |= (1<<22); // set PLL src HSE
+	RCC_PLLCFGR |= (1<<22);     // set PLL src HSE
 	
 
-	RCC_CR |= (1<<24); // PLL ON
+	RCC_CR |= (1<<24);          // PLL ON
 	while( (RCC_CR & (1<<25)) == 0); // wait until PLL ready
 	
 	FLASH_ACR |= 5;
-	RCC_CFGR |= 2; // set PLL to system clock
+	RCC_CFGR |= 2;              // set PLL to system clock
 	
 		
 	while( (RCC_CFGR & (12) ) != 8); // wait until PLL ready
 	
-	RCC_CFGR |= (1<<12) | (1<<10); // set APB1 div 4
-	RCC_CFGR |= (1<<15); // set APB2 div2	
+	RCC_CFGR |= (1<<12) | (1<<10);  // set APB1 div 4
+	RCC_CFGR |= (1<<15);            // set APB2 div2	
 }
 
-void TIM2_IRQHandler() {
+void EXTI0_IRQHandler() {
+    GPIOD_ODR ^= 1 << 13;
+    GPIOD_ODR ^= 1 << 14;
+    GPIOD_ODR ^= 1 << 15;
 
+    EXTI_PR |= 1<<0;    // clear pending bit for EXTI0
 }
 
 int main (void)
@@ -46,7 +50,14 @@ int main (void)
     GPIOA_MODER  |= 0<<0;       // input mode
     GPIOA_OTYPER |= 0<<0;       // output push-pull
     GPIOA_PUPDR  |= 0<<0;       // no pull-up, pull-down
-	
+
+    /* button intr set */
+    SYSCFG_EXTICR1  |= 0<<0;    // EXTI0 connect to PA0
+    EXTI_IMR        |= 1<<0;    // Mask EXTI0
+    EXTI_RTSR       |= 1<<0;    // Rising edge trigger enable
+    EXTI_FTSR       |= 0<<0;    // Falling edge trigger disable
+    NVIC_ISER0      |= 1<<6;    // Enable EXTI0 interrupt
+
 	/* PORT D */    // button
 	RCC_AHB1ENR  |= 1<<3;		// PORTD enable
 	GPIOD_MODER  |= 1<<24;		// PORTD 12 general output mode

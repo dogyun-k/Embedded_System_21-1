@@ -64,6 +64,25 @@ typedef volatile struct{
 	unsigned int rDMAR;
 }TIM2to5;
 
+typedef volatile struct{
+    unsigned int rMEMPMP;
+    unsigned int rPMC;
+    unsigned int rEXTICR1;
+    unsigned int rEXTICR2;
+    unsigned int rEXTICR3;
+    unsigned int rEXTICR4;
+    unsigned int rCMPCR;
+}REG_SYSCFG;
+
+typedef volatile struct{
+    unsigned int rIMR;
+    unsigned int rEMR;
+    unsigned int rRTSR;
+    unsigned int rFTSR;
+    unsigned int rSWIER;
+    unsigned int rPR;
+}REG_EXTI;
+
 // RCC register //
 #define RCC_BASE 0x40023800         // address start point
 #define RCC ((tREG_RCC*)RCC_BASE)   
@@ -126,7 +145,29 @@ typedef volatile struct{
 #define TIM2_PSC		(TIM2->rPSC)
 #define TIM2_ARR		(TIM2->rARR)
 
+// SYSCFG register //
+#define SYSCFG_BASE 0x40013000
+#define SYSCFG ((REG_SYSCFG*)SYSCFG_BASE)
 
+#define SYSCFG_MEMRMP   (SYSCFG->MEMRMP)
+#define SYSCFG_PMC      (SYSCFG->rPMC)
+#define SYSCFG_EXTICR1  (SYSCFG->rEXTICR1)
+#define SYSCFG_EXTICR2  (SYSCFG->rEXTICR2)
+#define SYSCFG_EXTICR3  (SYSCFG->rEXTICR3)
+#define SYSCFG_EXTICR4  (SYSCFG->rEXTICR4)
+#define SYSCFG_CMPCR    (SYSCFG->rCMPRC)
+
+
+// EXTI register //
+#define EXTI_BASE 0X40013C00
+#define EXTI ((REG_EXTI*)EXTI_BASE)
+
+#define EXTI_IMR    (EXTI->rIMR)
+#define EXTI_EMR    (EXTI->rEMR)
+#define EXTI_RTSR   (EXTI->rRTSR)
+#define EXTI_FTSR   (EXTI->rFTSR)
+#define EXTI_SWIER  (EXTI->rSWIER)
+#define EXTI_PR     (EXTI->rPR)
 
 #define FLASH_ACR *(volatile unsigned *)0x40023C00
 #define NVIC_ISER0 *(volatile unsigned *)0xE000E100
