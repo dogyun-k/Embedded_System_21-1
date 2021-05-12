@@ -1,52 +1,16 @@
 #include "STM32FDiscovery.h"
+#include <string.h>
+
+#define BUF_SIZE 2048
 
 unsigned int count = 0;
 unsigned char rec;
 
-unsigned int uart_data[423]= {
-32, 32, 32, 32, 32, 32, 32, 32, 32, 32,
-32, 95, 95, 95, 95, 95, 32, 32, 32, 32,
-32, 32, 95, 95, 95, 95, 95, 32, 95, 95,
-95, 32, 32, 32, 32, 32, 32, 32, 32, 95,
-95, 95, 95, 95, 32, 32, 32, 95, 32, 32,
-32, 32, 32, 32, 32, 32, 32, 32, 32, 32,
-32, 32, 32, 95, 95, 95, 95, 32, 32, 10,
-32, 32, 32, 32, 32, 47, 92, 32, 32, 32,
-124, 95, 32, 32, 32, 95, 124, 32, 32, 32,
-32, 47, 32, 95, 95, 95, 95, 124, 95, 95,
-32, 92, 32, 32, 32, 32, 32, 32, 47, 32,
-95, 95, 95, 95, 124, 32, 124, 32, 124, 32,
-32, 32, 32, 32, 32, 32, 32, 47, 92, 32,
-32, 32, 124, 32, 32, 95, 32, 92, 32, 10,
-32, 32, 32, 32, 47, 32, 32, 92, 32, 32,
-32, 32, 124, 32, 124, 95, 95, 95, 95, 95,
-124, 32, 40, 95, 95, 95, 32, 32, 32, 32,
-41, 32, 124, 95, 95, 95, 32, 124, 32, 124,
-32, 32, 32, 32, 32, 32, 124, 32, 124, 32,
-32, 32, 32, 32, 32, 32, 47, 32, 32, 92,
-32, 32, 124, 32, 124, 95, 41, 32, 124, 10,
-32, 32, 32, 47, 32, 47, 92, 32, 92, 32,
-32, 32, 124, 32, 124, 95, 95, 95, 95, 95,
-95, 92, 95, 95, 95, 32, 92, 32, 32, 47,
-32, 47, 47, 32, 95, 32, 92, 124, 32, 124,
-32, 32, 32, 32, 32, 32, 124, 32, 124, 32,
-32, 32, 32, 32, 32, 47, 32, 47, 92, 32,
-92, 32, 124, 32, 32, 95, 32, 60, 32, 10,
-32, 32, 47, 32, 95, 95, 95, 95, 32, 92,
-32, 95, 124, 32, 124, 95, 32, 32, 32, 32,
-32, 95, 95, 95, 95, 41, 32, 124, 47, 32,
-47, 124, 32, 40, 95, 41, 32, 124, 32, 124,
-95, 95, 95, 95, 32, 32, 124, 32, 124, 95,
-95, 95, 95, 32, 47, 32, 95, 95, 95, 95,
-32, 92, 124, 32, 124, 95, 41, 32, 124, 10,
-32, 47, 95, 47, 32, 32, 32, 32, 92, 95,
-92, 95, 95, 95, 95, 95, 124, 32, 32, 32,
-124, 95, 95, 95, 95, 95, 47, 124, 95, 95,
-95, 95, 92, 95, 95, 95, 47, 32, 92, 95,
-95, 95, 95, 95, 124, 32, 124, 95, 95, 95,
-95, 95, 95, 47, 95, 47, 32, 32, 32, 32,
-92, 95, 92, 95, 95, 95, 95, 47, 32, 10,
-10, 10, 10};
+char welcome[] = "/*************************************/\n/* LED Controller Shell for STM32F4! */\n/*************************************/\n";
+char help[] = "* Command List\nLEDON + [1, 2, 3, 4]\nLEDOFF + [1, 2, 3, 4]\nLEDALL + [0, 1]\nFLASH\n";
+char error[] = "\nWrong command!\nType [help]\n";
+char question[] = "\n> ";
+char buffer[BUF_SIZE];
 
 void clk(void)
 {
@@ -102,19 +66,164 @@ void set_usart2() {  // uart has 3 models
 
 }
 
-void USART2_IRQHandler() {
-    if( USART2_SR & (1<<5) ) {
-        rec = USART2_DR;
-
-        GPIOD_ODR ^= 1<<12;
-        
-        USART2_DR = rec;
+void print_error(){
+    for(int i = 0; i < strlen(error); i++){
+        USART2_DR = error[i];
         while( !(USART2_SR & (1<<7) ));
         while( !(USART2_SR & (1<<6) ));
+    }
+}
 
+void print_help(){
+    for(int i = 0; i < strlen(help); i++){
+        USART2_DR = help[i];
+        while( !(USART2_SR & (1<<7) ));
+        while( !(USART2_SR & (1<<6) ));
+    }
+}
+
+void USART2_IRQHandler() {
+    if( USART2_SR & (1<<5) ) {
+        rec = USART2_DR;        // read
+        USART2_DR = rec;        // write
+
+        if(rec != 13){          // 13 == Enter
+            buffer[count++] = rec;
+        }
+        else{
+            int i;
+            USART2_DR = 13;
+            while( !(USART2_SR & (1<<7) ));
+            while( !(USART2_SR & (1<<6) ));
+
+
+            // store command 
+            char command[3][BUF_SIZE];
+            char *ptr = strtok(buffer, " ");
+            int j = 0;
+            while( ptr != NULL ){
+                strncpy(command[j], "", BUF_SIZE);
+                strncpy(command[j], ptr, strlen(ptr));
+                ptr = strtok(NULL, " ");
+                j++;
+            }
+
+
+            // print command
+            // for(i = 0; i < BUF_SIZE; i++){
+            //     USART2_DR = buffer[i];
+            //     while( !(USART2_SR & (1<<7) ));
+            //     while( !(USART2_SR & (1<<6) ));
+            // }
+            // for(i = 0; i < strlen(command[0]); i++){
+            //     USART2_DR = command[0][i];
+            //     while( !(USART2_SR & (1<<7) ));
+            //     while( !(USART2_SR & (1<<6) ));
+            // }
+
+            // for(i = 0; i < strlen(command[1]); i++){
+            //     USART2_DR = command[1][i];
+            //     while( !(USART2_SR & (1<<7) ));
+            //     while( !(USART2_SR & (1<<6) ));
+            // }
+
+
+            // Functions
+            if( strcmp(command[0], "help") == 0){           // help
+                print_help();
+            }
+            else if( strcmp(command[0], "LEDON") == 0){     // LED ON
+                if( strcmp(command[1], "1") == 0 ){
+                    GPIOD_ODR |= 1 << 12;
+                }
+                else if( strcmp(command[1], "2") == 0 ){
+                    GPIOD_ODR |= 1 << 13;
+                }
+                else if( strcmp(command[1], "3") == 0 ){
+                    GPIOD_ODR |= 1 << 14;
+                }
+                else if( strcmp(command[1], "4") == 0 ){
+                    GPIOD_ODR |= 1 << 15;
+                }
+                else{
+                    print_error();
+                }
+            }
+            else if( strcmp(command[0], "LEDOFF") == 0){    // LED OFF
+                if( strcmp(command[1], "1") == 0 ){
+                    GPIOD_ODR &= ~(1 << 12);
+                }
+                else if( strcmp(command[1], "2") == 0 ){
+                    GPIOD_ODR &= ~(1 << 13);
+                }
+                else if( strcmp(command[1], "3") == 0 ){
+                    GPIOD_ODR &= ~(1 << 14);
+                }
+                else if( strcmp(command[1], "4") == 0 ){
+                    GPIOD_ODR &= ~(1 << 15);
+                }
+                else{
+                    print_error();
+                }
+            }
+            else if( strcmp(command[0], "LEDALL") == 0 ){
+                if( strcmp(command[1], "0") == 0 ){
+                    GPIOD_ODR &= ~(1 << 12);
+                    GPIOD_ODR &= ~(1 << 13);
+                    GPIOD_ODR &= ~(1 << 14);
+                    GPIOD_ODR &= ~(1 << 15);
+                }
+                else if( strcmp(command[1], "1") == 0 ){
+                    GPIOD_ODR |= 1 << 12;
+                    GPIOD_ODR |= 1 << 13;
+                    GPIOD_ODR |= 1 << 14;
+                    GPIOD_ODR |= 1 << 15;
+                }
+                else{
+                    print_error();
+                }
+            }
+            else if( strcmp(command[0], "FLASH") == 0 ){
+                for(i = 0; i < 10; i++){
+                    for(int j = 0; j < 100000; j++);
+                    GPIOD_ODR ^= 1 << 12;
+                    
+                    for(int j = 0; j < 100000; j++);
+                    GPIOD_ODR ^= 1 << 13;
+                    
+                    for(int j = 0; j < 100000; j++);
+                    GPIOD_ODR ^= 1 << 14;
+                    
+                    for(int j = 0; j < 100000; j++);
+                    GPIOD_ODR ^= 1 << 15;
+                }
+            }
+            else{
+                // ERROR
+                print_error();
+            }
+
+
+
+            strncpy(buffer, "", BUF_SIZE);
+            for(i = 0; i < 3; i++){
+                strncpy(command[i], "", strlen(command[i]));
+            }
+
+            for(i = 0; i < strlen(question); i++){      // print question
+                USART2_DR = question[i];
+                while( !(USART2_SR & (1<<7) ));
+                while( !(USART2_SR & (1<<6) ));
+            }
+            count = 0;
+        }
+   
+        
         USART2_CR1 |= (1<<5);
     }
 }
+
+
 
 void EXTI0_IRQHandler() {
     GPIOD_ODR ^= 1 << 13;
@@ -153,21 +262,23 @@ int main (void)
 	GPIOD_OTYPER |= 0x00000000;
 	GPIOD_PUPDR	 |= 0x00000000;
 	
-	GPIOD_ODR |= 1<<12;
     
     set_usart2();
 
-    while( count < 423 ) {
-        USART2_DR = uart_data[count++];
+    // Init Terminal Screen
+    int i;
+    for(i = 0; i < strlen(welcome); i++){
+        USART2_DR = welcome[i];
+        while( !(USART2_SR & (1<<7) ));
+        while( !(USART2_SR & (1<<6) ));
+    }
+    for(i = 0; i < strlen(question); i++){
+        USART2_DR = question[i];
         while( !(USART2_SR & (1<<7) ));
         while( !(USART2_SR & (1<<6) ));
     }
 
 	while(1) {
-        if( GPIOA_IDR & 0x00000001 ) {
-            GPIOD_ODR ^= 1 << 13;
-            GPIOD_ODR ^= 1 << 14;
-            GPIOD_ODR ^= 1 << 15;
-        }
+        // Waiting Interrupt 
 	}
 }
