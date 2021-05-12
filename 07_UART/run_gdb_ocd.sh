@@ -6,4 +6,6 @@ gdb-multiarch \
     -ex "file out.elf" \
     -ex "load" \
     -ex "b EXTI0_IRQHandler" \
+    -ex "b USART2_IRQHandler" \
+    -ex "b main:141" \
     -ex "continue"

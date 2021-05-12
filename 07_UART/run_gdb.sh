@@ -5,6 +5,7 @@ gdb-multiarch \
         -s "out.elf" \
     	-ex "load" \
     	-ex "b EXTI0_IRQHandler" \
-    	-ex "set arc arm" \
+    	-ex "b USART2_IRQHandler" \
+        -ex "set arc arm" \
         -ex "monitor system_reset" \
         -ex "continue" 
