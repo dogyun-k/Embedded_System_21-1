@@ -90,17 +90,17 @@
     }
     ```
 
-    RCC_AHB1ENR : GPIO포트를 활성화하기 위해 해당 레지스터를 만져줘야한다. 0번 레지스터가 GPIO A를 담당하고 있고 UART는 포트 A에서 사용하므로 포트 A를 활성화해준다. 
+- RCC_AHB1ENR : GPIO포트를 활성화하기 위해 해당 레지스터를 만져줘야한다. 0번 레지스터가 GPIO A를 담당하고 있고 UART는 포트 A에서 사용하므로 포트 A를 활성화해준다. 
 
-    GPIOA_MODER : A포트의 2번핀 3번핀을 Alternate function mode로 활성화한다.
+- GPIOA_MODER : A포트의 2번핀 3번핀을 Alternate function mode로 활성화한다.
 
-        > Alternate function mode? 연결된 주변장치(여기서는 UART)를 선택하는 모드이다.
+    > Alternate function mode? 연결된 주변장치(여기서는 UART)를 선택하는 모드이다.
     
-    GPIOA_AFRL : A포트의 2번핀 3번핀의 주변기기에서 입출력을 하게 해준다.
+- GPIOA_AFRL : A포트의 2번핀 3번핀의 주변기기에서 입출력을 하게 해준다.
 
-    RCC_APB1ENR : USART2 클락을 사용하기위해 활성화하는 것이다.
+- RCC_APB1ENR : USART2 클락을 사용하기위해 활성화하는 것이다.
 
-    USART2_CR1
+- USART2_CR1
 
     - Bit 2 : RE(Receive Enable)을 설정하는 비트로 0으로 설정되면 받을 수 없고 1로 설정되면 데이터를 받는 모드로 활성화되어 start bit를 찾는다.
 
@@ -112,12 +112,14 @@
 
     - Bit 13 : UE(USART Enable)를 설정하는 비트로 0이면 사용안하고 1이면 사용한다.
 
-    USART2_CR2
+- USART2_CR2
 
     - Bit 12, 13 : stop bit로 00이면 1 stop bit를 의미한다.
 
-    NVIC_ISER1 : Global Interrupt를 받게 한다.
+- NVIC_ISER1 : Global Interrupt를 받게 한다.
 
-    USART2_SR
+- USART2_SR
 
     - Bit 5 : 0이면 읽을 데이터가 없고 1이면 읽을 데이터가 있다.
+
+2. USART2_Handler
