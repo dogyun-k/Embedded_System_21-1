@@ -20,14 +20,13 @@
 
         데이터 해석을 위해서 필요한 정보는 다음과 같다.
 
-        1. **Baud Rate**(보레이트) : 초당 얼마나 많은 심볼(의미있는 데이터)을 전송할 지에 대한 정보
+        1. Baud Rate(보레이트) : 초당 얼마나 많은 심볼(의미있는 데이터)을 전송할 지에 대한 정보
 
         2. 데이터의 길이 : ~ 8 bit
         
         3. 패리티비트 : 오류 검출을 위한 것.
 
         4. start bit(시작비트), stop bit(정지비트) : 비동기 데이터 전송이므로 언제 데이터가 시작되는지 알기위해 시작비트가 있어야하고 언제 데이터 전송이 끝나는지 알기위해 정지비트가 있어야 한다. 
-
 
 1. UART 연결
 
@@ -40,10 +39,13 @@
         3. VCC and GND
 
     
-    UART에서 사용하는 시리얼 통신은 구현이 매우 간단하다.
+    - UART에서 사용하는 시리얼 통신은 구현이 매우 간단하다.
 
-    USB-to-Serial 장비로 통신한다.
+    - 우리는 USB-to-Serial 장비로 통신한다.
 
+2. 통신 과정
+
+    우선 레지스터에서 데이터의 길이, 패리티비트, 시작비트, 정지비트를 세팅해준다. 그리고 USART의 SR(상태 레지스터)을 검사하여 현재 송/수신이 가능한지 확인한다. DR(데이터 레지스터)에 데이터가 있어 송신이 가능한 상태이면(TX) 시작비트 - 데이터 - 정지비트를 전송하게 되며 받는쪽은 수신 가능한 상태여야 한다. 수신쪽은 이전에 설정한 시작비트를 생각하여 시작비트가 들어오게 되면 그 다음 데이터부터 읽으며 정지비트가 들어오면 수신을 멈춘다. 이때 송/수신하는 속도는 Boud rate가 결정하는데 이는 초당 몇 비트를 전송하는지에 대한 단위이다.
 
 
 
@@ -60,8 +62,19 @@
 - 한 번 명령어를 입력하고 종료되는 것이 아니라, Ubuntu의 bash 쉘처럼 연속해서 명령어를 입력받을 수 있도록 구현
 - 명령어 + 인자를 결합하여 수신하도록 구현
 
+## 0. 결과
 
-1. MCU UART Setting
+![command](./image/command.PNG)
+
+- 기능
+
+    1. help
+
+    2. LED 제어 : 개별 On/Off, 전부 On/Off, 깜빡이기
+
+    3. 잘못 입력 시 안내 문구 출력
+
+## 1. MCU UART Setting
 
     ```c
     void set_usart2() {  // uart has 3 models
@@ -119,6 +132,129 @@
 
 - USART2_SR
 
-    - Bit 5 : 0이면 읽을 데이터가 없고 1이면 읽을 데이터가 있다.
+    - Bit 5 : 0이면 읽을 데이터가 없고 1이면 읽을 데이터가 있다. 이 비트는 하드웨어에 의해서만 쓰여질 수 있는데, USART2_DR, 즉 데이터 레지스터에 값이 있다면 1로 쓰여진다.
 
-2. USART2_Handler
+## 2. USART2_Handler
+
+```c
+void USART2_IRQHandler() {
+    if( USART2_SR & (1<<5) ) {
+        rec = USART2_DR;        // read
+        USART2_DR = rec;        // write
+
+        if(rec != 13){          // 13 == Enter
+            buffer[count++] = rec;
+        }
+        else{
+            int i;
+            USART2_DR = 13;
+            while( !(USART2_SR & (1<<7) ));
+            while( !(USART2_SR & (1<<6) ));
+
+
+            // store command 
+            char command[3][BUF_SIZE];
+            char *ptr = strtok(buffer, " ");
+            int j = 0;
+            while( ptr != NULL ){
+                strncpy(command[j], "", BUF_SIZE);
+                strncpy(command[j], ptr, strlen(ptr));
+                ptr = strtok(NULL, " ");
+                j++;
+            }
+
+            // Functions
+            if( strcmp(command[0], "help") == 0){           // help
+                print_help();
+            }
+            else if( strcmp(command[0], "LEDON") == 0){     // LED ON
+                if( strcmp(command[1], "1") == 0 ){
+                    GPIOD_ODR |= 1 << 12;
+                }
+                else if( strcmp(command[1], "2") == 0 ){
+                    GPIOD_ODR |= 1 << 13;
+                }
+                else if( strcmp(command[1], "3") == 0 ){
+                    GPIOD_ODR |= 1 << 14;
+                }
+                else if( strcmp(command[1], "4") == 0 ){
+                    GPIOD_ODR |= 1 << 15;
+                }
+                else{
+                    print_error();
+                }
+            }
+            else if( strcmp(command[0], "LEDOFF") == 0){    // LED OFF
+                if( strcmp(command[1], "1") == 0 ){
+                    GPIOD_ODR &= ~(1 << 12);
+                }
+                else if( strcmp(command[1], "2") == 0 ){
+                    GPIOD_ODR &= ~(1 << 13);
+                }
+                else if( strcmp(command[1], "3") == 0 ){
+                    GPIOD_ODR &= ~(1 << 14);
+                }
+                else if( strcmp(command[1], "4") == 0 ){
+                    GPIOD_ODR &= ~(1 << 15);
+                }
+                else{
+                    print_error();
+                }
+            }
+            else if( strcmp(command[0], "LEDALL") == 0 ){   // LED ON ALL
+                if( strcmp(command[1], "0") == 0 ){
+                    GPIOD_ODR &= ~(1 << 12);
+                    GPIOD_ODR &= ~(1 << 13);
+                    GPIOD_ODR &= ~(1 << 14);
+                    GPIOD_ODR &= ~(1 << 15);
+                }
+                else if( strcmp(command[1], "1") == 0 ){
+                    GPIOD_ODR |= 1 << 12;
+                    GPIOD_ODR |= 1 << 13;
+                    GPIOD_ODR |= 1 << 14;
+                    GPIOD_ODR |= 1 << 15;
+                }
+                else{
+                    print_error();
+                }
+            }
+            else if( strcmp(command[0], "FLASH") == 0 ){    // FLASH LED
+                for(i = 0; i < 10; i++){
+                    for(int j = 0; j < 100000; j++);
+                    GPIOD_ODR ^= 1 << 12;
+                    
+                    for(int j = 0; j < 100000; j++);
+                    GPIOD_ODR ^= 1 << 13;
+                    
+                    for(int j = 0; j < 100000; j++);
+                    GPIOD_ODR ^= 1 << 14;
+                    
+                    for(int j = 0; j < 100000; j++);
+                    GPIOD_ODR ^= 1 << 15;
+                }
+            }
+            else{
+                // ERROR
+                print_error();
+            }
+
+
+            // remove Buffer content
+            strncpy(buffer, "", BUF_SIZE);      
+            for(i = 0; i < 3; i++){
+                strncpy(command[i], "", strlen(command[i]));
+            }
+
+            for(i = 0; i < strlen(question); i++){      // print question
+                USART2_DR = question[i];
+                while( !(USART2_SR & (1<<7) ));
+                while( !(USART2_SR & (1<<6) ));
+            }
+            count = 0;
+        }
+   
+        
+        USART2_CR1 |= (1<<5);
+    }
+}
+```
