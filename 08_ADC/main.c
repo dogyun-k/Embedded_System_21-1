@@ -1,9 +1,8 @@
 #include "STM32FDiscovery.h"
-#include <stdio.h>
+// #include <stdio.h>
 
 unsigned int count = 0, len;
 unsigned char rec, adc_val;
-
 char buf[5];
 
 void sendStr(char buf[], int max);
@@ -108,8 +107,23 @@ void USART2_IRQHandler() {
 void ADC1_IRQHandler(){
     if( ADC1_SR & 1<<1 ){
         adc_val = ADC1_DR & 0xff;
+        
+        // len = sprintf(buf, "%3d\n", adc_val);       // return : string length
 
-        len = sprintf(buf, "%3d\n", adc_val);       // return : string length
+        if(adc_val > 100) {
+            buf[0] = (adc_val / 100) + '0';
+            buf[1] = ((adc_val % 100) / 10) +'0';
+            buf[2] = ((adc_val % 100) % 10) +'0';
+            buf[3] = '\n';
+            len = 4;
+        }
+        else {
+            buf[0] = (adc_val / 10) + '0';
+            buf[1] = (adc_val % 10) +'0';
+            buf[2] = '\n';
+            len = 3;
+        }
+
         sendStr(buf, len);
     }
     ADC1_CR2 |= 1<<30;
