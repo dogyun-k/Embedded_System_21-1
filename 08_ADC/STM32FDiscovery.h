@@ -108,7 +108,6 @@ typedef volatile struct{
 	unsigned int rCRS;
 	unsigned int rCCR;
 	unsigned int rCDR;
-
 }REG_ADC;
 
 

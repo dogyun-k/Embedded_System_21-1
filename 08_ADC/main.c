@@ -81,7 +81,6 @@ void set_adc1() {        // ADC1, channel 1, PA1
     ADC1_SQR3 |= 1<<0;              // 1st conversion : channel 1
 
     NVIC_ISER0 |= 1<<18;            // enable interrupt
-
 }   
 
 void sendStr(char buf[], int max) {
@@ -154,7 +153,6 @@ int main (void)
 	
     
     set_usart2();
-    
     set_adc1();
 
     ADC1_CR2 |= 1<<30;
