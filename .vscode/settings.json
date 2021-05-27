@@ -1,7 +1,8 @@
 {
     "files.associations": {
         "stdio.h": "c",
-        "math.h": "c"
+        "math.h": "c",
+        "stm32fdiscovery.h": "c"
     },
     "git.ignoreLimitWarning": true
 }
