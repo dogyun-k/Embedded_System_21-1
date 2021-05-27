@@ -19,6 +19,28 @@
 
 - ## vim
 
+    0. vi를 사용하기 편하게 설정파일을 수정한다.
+
+	```
+	vi ~/.vimrc
+	```
+	
+	```
+	set expandtab
+	set ts=4
+	set sw=4
+	set nobackup
+	set autoindent
+	
+	syn on
+	set hlsearch
+	set nu
+	
+	set guifond=Monospace\ 16
+	autocmd BufNewFile,BufRead Makefile,makefile set noexpandtab
+	
+	```
+
     1. 명령어를 입력할 때는 현재 명령 모드로 있어야함 다른 모드로 있으면 esc를 눌러서 명령 모드로 변환
         ```
         :wq	: 저장 후 나가기
