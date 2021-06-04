@@ -141,19 +141,6 @@ typedef volatile struct{
 #define GPIOA_AFRL		(GPIOA->rAFRL) 
 #define GPIOA_AFRH		(GPIOA->rAFRH)  
 
-// GPIO B //
-#define GPIOB_BASE 0x40020400
-#define GPIOB ((REG_GPIO*)GPIOB_BASE)
-
-#define GPIOB_MODER		(GPIOB->rMODER) 
-#define GPIOB_OTYPER  	(GPIOB->rOTYPER)
-#define GPIOB_OSPEEDR 	(GPIOB->rOSPEEDR) 
-#define GPIOB_PUPDR  	(GPIOB->rPUPDR)
-#define GPIOB_IDR    	(GPIOB->rIDR)  
-#define GPIOB_ODR		(GPIOB->rODR) 
-#define GPIOB_AFRL		(GPIOB->rAFRL) 
-#define GPIOB_AFRH		(GPIOB->rAFRH)
-
 // GPIO D //
 #define GPIOD_BASE 0x40020C00
 #define GPIOD ((REG_GPIO*)GPIOD_BASE)

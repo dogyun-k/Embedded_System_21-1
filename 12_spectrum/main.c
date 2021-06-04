@@ -1,13 +1,14 @@
 #include "STM32FDiscovery.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <math.h>
 
 
 #define F 200   // sampling speed
 #define T 1/F   // sampling period
-#define A 5.0   // amplitude
-#define N 200   // number of sampele depth
+// #define A 5.0   // amplitude
+#define N 400   // number of sampele depth
 #define PI 3.14
 
 unsigned int count = 0, len;
@@ -18,9 +19,7 @@ char buf[5];
 void sendStr(char buf[], int max);
 
 /* Setting Start */
-
-void clk(void)
-{
+void clk(void) {
 	RCC_CR = 0;
 	RCC_PLLCFGR = 0;
 	RCC_CFGR = 0;
@@ -47,7 +46,34 @@ void clk(void)
 	
 	RCC_CFGR |= (1<<12) | (1<<10);  // set APB1 div 4
 	RCC_CFGR |= (1<<15);            // set APB2 div2	
+
     SCB_CPACR |= (3<<20) | (3<<22);
+}
+
+void set_leds(){
+    /* PORT A */    // led 
+	RCC_AHB1ENR  |= 1<<0;       // RCC clock enable register	
+    GPIOA_MODER  |= 0<<0;       // input mode
+    GPIOA_OTYPER |= 0<<0;       // output push-pull
+    GPIOA_PUPDR  |= 0<<0;       // no pull-up, pull-down
+}
+
+void set_btn(){
+    /* button intr set */
+    SYSCFG_EXTICR1  |= 0<<0;    // EXTI0 connect to PA0
+    EXTI_IMR        |= 1<<0;    // Mask EXTI0
+    EXTI_RTSR       |= 1<<0;    // Rising edge trigger enable
+    EXTI_FTSR       |= 0<<0;    // Falling edge trigger disable
+    NVIC_ISER0      |= 1<<6;    // Enable EXTI0 interrupt
+
+    /* PORT D */    // button
+	RCC_AHB1ENR  |= 1<<3;		// PORTD enable
+	GPIOD_MODER  |= 1<<24;		// PORTD 12 general output mode
+	GPIOD_MODER  |= 1<<26;		// PORTD 13 general output mode
+	GPIOD_MODER  |= 1<<28;		// PORTD 14 general output mode
+	GPIOD_MODER  |= 1<<30;		// PORTD 15 general output mode
+	GPIOD_OTYPER |= 0x00000000;
+	GPIOD_PUPDR	 |= 0x00000000;
 }
 
 void set_usart2() {      // uart has 3 models
@@ -109,13 +135,14 @@ void set_timer2(){
 /* Setting End */
 
 
+
 /* IRQHandlers Start */
 void TIM2_IRQHandler() {
     TIM2_SR &= 0x00000000;
 
     tim2_tick++;
 
-    if( tim2_tick == 2000 ) {       // 1ms * 1000 = 1 sec
+    if( tim2_tick == 1000 ) {       // 1ms * 1000 = 1 sec
         GPIOA_ODR ^= 1<<12;         // green
         ADC1_CR2 |= 1<<30;
         tim2_tick = 0;
@@ -123,6 +150,7 @@ void TIM2_IRQHandler() {
 }
 
 void USART2_IRQHandler() {
+
     if( USART2_SR & (1<<5) ) {
         rec = USART2_DR;        // read
         USART2_DR = rec;        // write
@@ -136,17 +164,21 @@ void USART2_IRQHandler() {
 
 void ADC1_IRQHandler() {
     float polynomial[N];
+    float A;
 
     if( ADC1_SR & 1<<1 ) { 
-        adc_val = ADC1_DR & 0xff;       // Input data value 
-        
+        sendStr("S ", 2);
+        // adc_val = ADC1_DR & 0xff;       // Input data value 
+        A = ADC1_DR & 0xff;
+        A /= 100;       // too much high value, rescaling
+
         // signal getneration (sum of harmonics)
         for(int i = 0; i <= N; i++) {     // time advance
             
             int hi = 1; // harmonics 1 Hz
             polynomial[i] = 0;
             
-            for(int j = 0; j < 32; j++){    // frequency advance
+            for(int j = 0; j < 64; j++){    // frequency advance
                 float signal = (float) (A / hi) * sin(2 * PI * hi * T * i);     // adc value 
                 polynomial[i] += signal;
                 hi += 2;
@@ -157,7 +189,7 @@ void ADC1_IRQHandler() {
         }
 
         // fourier analysis
-        for(int probe_freq = 0; probe_freq < 32; probe_freq++){
+        for(int probe_freq = 0; probe_freq < 64; probe_freq++){
 
             float freq_component = 0;
             for(int i = 0; i < N; i++){
@@ -173,20 +205,20 @@ void ADC1_IRQHandler() {
         }
 
         // len = sprintf(buf, "%3d\n", adc_val);       // return : string length
+        // sendStr(buf, len);
+        sendStr("E ", 2);
     }
     //ADC1_CR2 |= 1<<30;
 }
 
 void EXTI0_IRQHandler() {
+
     GPIOD_ODR ^= 1 << 13;
-    GPIOD_ODR ^= 1 << 14;
-    GPIOD_ODR ^= 1 << 15;
 
     EXTI_PR |= 1<<0;    // clear pending bit for EXTI0
 }
 
 /* IRQHandlers End */
-
 
 
 
@@ -196,28 +228,9 @@ int main (void) {
 	
 	RCC_CFGR |= 0x04600000;
 
-    /* PORT A */    // led 
-	RCC_AHB1ENR  |= 1<<0;       //RCC clock enable register	
-    GPIOA_MODER  |= 0<<0;       // input mode
-    GPIOA_OTYPER |= 0<<0;       // output push-pull
-    GPIOA_PUPDR  |= 0<<0;       // no pull-up, pull-down
+    set_leds();
+    set_btn();
 
-    /* button intr set */
-    SYSCFG_EXTICR1  |= 0<<0;    // EXTI0 connect to PA0
-    EXTI_IMR        |= 1<<0;    // Mask EXTI0
-    EXTI_RTSR       |= 1<<0;    // Rising edge trigger enable
-    EXTI_FTSR       |= 0<<0;    // Falling edge trigger disable
-    NVIC_ISER0      |= 1<<6;    // Enable EXTI0 interrupt
-
-	/* PORT D */    // button
-	RCC_AHB1ENR  |= 1<<3;		// PORTD enable
-	GPIOD_MODER  |= 1<<24;		// PORTD 12 general output mode
-	GPIOD_MODER  |= 1<<26;		// PORTD 13 general output mode
-	GPIOD_MODER  |= 1<<28;		// PORTD 14 general output mode
-	GPIOD_MODER  |= 1<<30;		// PORTD 15 general output mode
-	GPIOD_OTYPER |= 0x00000000;
-	GPIOD_PUPDR	 |= 0x00000000;
-	
     GPIOA_ODR |= 1<<12;
 
     set_timer2();
@@ -244,4 +257,3 @@ void sendStr(char buf[], int max) {
         while( !(USART2_SR & (1<<6) ));
     }
 }
-

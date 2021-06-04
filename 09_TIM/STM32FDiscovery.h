@@ -231,4 +231,4 @@ typedef volatile struct{
 #define FLASH_ACR *(volatile unsigned *)0x40023C00
 #define NVIC_ISER0 *(volatile unsigned *)0xE000E100
 #define NVIC_ISER1 *(volatile unsigned *)0xE000E104
-
+#define SCB_CPACR *(volatile unsigned *)0xE000ED88

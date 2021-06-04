@@ -50,3 +50,6 @@ go:
 	make all
 	make flash
 	make gtkterm
+
+processing:
+	/home/dogyun/tools/processing-3.5.4/processing

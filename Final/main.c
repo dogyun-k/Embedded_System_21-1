@@ -1,15 +1,18 @@
 #include "STM32FDiscovery.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <math.h>
 
 
 #define F 200   // sampling speed
 #define T 1/F   // sampling period
 #define A 5.0   // amplitude
-#define N 200   // number of sampele depth
+#define N 100   // number of sample depth
 #define PI 3.14
 
+float polynomial[N];
+unsigned int sample_num = 0;
 unsigned int count = 0, len;
 unsigned int tim2_tick = 0;
 unsigned char rec, adc_val;
@@ -131,6 +134,13 @@ void set_timer2(){
     NVIC_ISER0 |= 1<<28;
 }
 
+void set_wind(){
+    RCC_AHB1ENR     |= 1<<1;    // port B enable
+    GPIOB_MODER     |= 1<<2;    // PORTB 1 general output mode
+    GPIOB_OTYPER    |= 0x00000000;
+    GPIOB_PUPDR     |= 0x00000000;
+}
+
 /* Setting End */
 
 
@@ -141,7 +151,7 @@ void TIM2_IRQHandler() {
 
     tim2_tick++;
 
-    if( tim2_tick == 10000 ) {       // 1ms * 1000 = 1 sec
+    if( tim2_tick == 100 ) {       // 1ms * 1000 = 1 sec
         GPIOA_ODR ^= 1<<12;         // green
         ADC1_CR2 |= 1<<30;
         tim2_tick = 0;
@@ -161,52 +171,72 @@ void USART2_IRQHandler() {
     }
 }
 
-void ADC1_IRQHandler() {
-    float polynomial[N];
-
+void check(){
     if( ADC1_SR & 1<<1 ) { 
-        adc_val = ADC1_DR & 0xff;
-        
-        // signal getneration (sum of harmonics)
-        for(int i = 0; i <= N; i++) {     // time advance
-            
-            int hi = 1; // harmonics 1 Hz
-            polynomial[i] = 0;
-            
-            for(int j = 0; j < 32; j++){    // frequency advance
-                float signal = (float) (A / hi) * sin(2 * PI * hi * T * i);     // adc value 
-                polynomial[i] += signal;
-                hi += 2;
-            }
+        adc_val = ADC1_DR & 0xff;       // Input data value 
 
-            // plot
-            // fprintf(file_out, "%d \t %.2f \n", i, polynomial[i]);
+        if(adc_val <= 100){
+            GPIOB_ODR |= 1 << 1;
+        }        
+        else{
+            GPIOB_ODR &= 0 << 1;
         }
+
+        len = sprintf(buf, "%3d\n", adc_val);       // return : string length
+        sendStr(buf, len);
+    }
+}
+
+void set_freq(int s_range, int e_range){
+
+    int num = 0;
+
+    for(int probe_freq = s_range; probe_freq < e_range; probe_freq++){
 
         // fourier analysis
-        for(int probe_freq = 0; probe_freq < 32; probe_freq++){
+        float freq_component = 0;
+        for(int i = 0; i < N; i++){
+            float probe = (float) (A) * sin(2 * PI * probe_freq * T * i);
 
-            float freq_component = 0;
-            for(int i = 0; i < N; i++){
-                float probe = (float) (A) * sin(2 * PI * probe_freq * T * i);
-
-                freq_component += polynomial[i] * probe;
-            }
-
-            // printf("%d Hz component strength is %.1f\n", probe_freq, freq_component);
-            // fprintf("%d \t %f \n", probe_freq, freq_component);
-            len = sprintf(buf, "%.1f\n", freq_component);
-            sendStr(buf, len);
+            freq_component += polynomial[i] * probe;
         }
 
-        // len = sprintf(buf, "%3d\n", adc_val);       // return : string length
+        if(num < 10){
+            len = sprintf(buf, "%.1f ", freq_component);
+            sendStr(buf, len);
+            num++;
+        }
+        else{
+            break;
+        }
     }
+}
+
+void ADC1_IRQHandler() {
+    // check();
+    if( ADC1_SR & 1<<1 ) { 
+        adc_val = ADC1_DR & 0xff;
+        polynomial[sample_num++] = adc_val;
+    }
+    
+    if(sample_num >= N){
+        sendStr("S ", 2);
+
+        for(int x = 0; x < 100; x++){       // frequency 100 ~ 10000
+            set_freq(100 * x, 100 * (x + 1));
+        }
+
+        sendStr("E ", 2);
+        sample_num = 0;
+    }
+
     ADC1_CR2 |= 1<<30;
 }
 
 void EXTI0_IRQHandler() {
 
     GPIOD_ODR ^= 1 << 13;
+    GPIOD_ODR ^= 1 << 14;
 
     EXTI_PR |= 1<<0;    // clear pending bit for EXTI0
 }
@@ -229,7 +259,7 @@ int main (void) {
     set_timer2();
     set_usart2();
     set_adc1();
-
+    set_wind();
 
     ADC1_CR2 |= 1<<30;
 
